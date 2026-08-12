@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Model Router & Prompt Optimizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <htext class="text-2xl font-bold text-gray-800 mb-2 text-center block">AI Model Router</htext>
+        <p class="text-gray-500 text-center mb-6 text-sm">Nhập yêu cầu của bạn, AI sẽ chọn mô hình phù hợp nhất và tối ưu hóa câu lệnh.</p>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Yêu cầu của bạn:</label>
+                <textarea id="query" rows="3" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="Ví dụ: Viết một đoạn code Python crawl dữ liệu hoặc vẽ một bức tranh..."></textarea>
+            </div>
+            <button onclick="sendRequest()" id="submit-btn" class="w-full bg-indigo-600 text-white font-medium py-2.5 rounded-lg hover:bg-indigo-700 transition duration-200">
+                Phân tích & Tối ưu Prompt
+            </button>
+        </div>
 
+        <!-- Khung hiển thị kết quả -->
+        <div id="result-container" class="mt-8 hidden space-y-4 border-t pt-6">
+            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                <span class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Mô hình đề xuất</span>
+                <h3 id="model-name" class="text-lg font-bold text-indigo-900"></h3>
+                <p id="model-reason" class="text-sm text-indigo-700 mt-1"></p>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-gray-700">System Prompt gợi ý:</span>
+                    <button onclick="copyText('sys-prompt')" class="text-xs text-indigo-600 hover:underline">Copy</button>
+                </div>
+                <div id="sys-prompt" class="bg-gray-100 p-3 rounded-lg text-sm text-gray-800 font-mono"></div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-gray-700">User Prompt tối ưu:</span>
+                    <button onclick="copyText('user-prompt')" class="text-xs text-indigo-600 hover:underline">Copy</button>
+                </div>
+                <div id="user-prompt" class="bg-gray-100 p-3 rounded-lg text-sm text-gray-800 font-mono"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function sendRequest() {
+            const query = document.getElementById('query').value;
+            const btn = document.getElementById('submit-btn');
+            const resultContainer = document.getElementById('result-container');
+            
+            if (!query.trim()) {
+                alert('Vui lòng nhập yêu cầu của bạn!');
+                return;
+            }
+
+            btn.innerText = "Đang xử lý...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/route', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: query})
+                });
+                
+                const data = await res.json();
+                
+                if(res.ok) {
+                    document.getElementById('model-name').innerText = data.model_name;
+                    document.getElementById('model-reason').innerText = data.reason;
+                    document.getElementById('sys-prompt').innerText = data.system_prompt;
+                    document.getElementById('user-prompt').innerText = data.optimized_prompt;
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    alert('Lỗi: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Không thể kết nối đến server!');
+            } finally {
+                btn.innerText = "Phân tích & Tối ưu Prompt";
+                btn.disabled = false;
+            }
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text);
+            alert('Đã sao chép vào bộ nhớ tạm!');
+        }
+    </script>
+</body>
+</html>
